@@ -123,12 +123,12 @@
   "preSubmitCommand": [
     "bash",
     "-c",
-    "./tools/bonsai2-27b-measure-and-score.sh --preflight-only"
+    "./tools/measure-and-score.sh --preflight-only"
   ],
   "benchmarkCommand": [
     "bash",
     "-c",
-    "MLXFAST_SCORE_PATH=score.json ./tools/bonsai2-27b-measure-and-score.sh"
+    "MLXFAST_SCORE_PATH=score.json ./tools/measure-and-score.sh"
   ],
   "runner": {
     "provider": "github-actions",

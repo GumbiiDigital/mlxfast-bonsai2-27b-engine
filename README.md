@@ -696,7 +696,7 @@ the two trees.
 tree. It reads the DFlash 2 drafter from
 `MLXFAST_DFLASH_DRAFTER_REFERENCE_DIR`, and that copy costs 3.85 GB there.
 
-`tools/bonsai2-27b-measure-and-score.sh` boots nothing. It takes the box
+`tools/measure-and-score.sh` boots nothing. It takes the box
 GPU lock `/tmp/mtplx-gpu-exclusive.lock` and holds it for the whole
 measurement, because a resident holds about 8.6 GB of unified memory whoever
 booted it, and the box needs exactly one loader. `tools/resident-up.sh` refuses

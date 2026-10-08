@@ -213,7 +213,7 @@ jobs:
         # that MLXFAST_QWEN_MTP_TRACK_ID reaches benchd equal to
         # benchmark.json's trackId in every mode, and that a manifest without
         # one refuses before benchd is spawned. It also drives the REAL
-        # tools/bonsai2-27b-measure-and-score.sh with a stub bench-worker
+        # tools/measure-and-score.sh with a stub bench-worker
         # and asserts the ranked path boots NO resident and exports NO
         # BENCH_WORKER_RESIDENT_SOCKET (benchd boots one per leg, from that
         # leg's own tree) while still taking the GPU lock, that an inherited

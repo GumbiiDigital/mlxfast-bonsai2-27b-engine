@@ -87,7 +87,7 @@ submodule when it became a pinned prebuilt, the engine fork is a vendored tree
 rather than a gitlink, and .gitmodules is gone, so gitlink_paths() is empty and
 the downgrade applies to nothing. Every command target lives in this repository
 (./setup.sh, ./tools/fetch-benchd.sh,
-./tools/bonsai2-27b-measure-and-score.sh) and all three are fully verified
+./tools/measure-and-score.sh) and all three are fully verified
 in CI. The flag is kept for the next submodule, not removed as dead.
 """
 
@@ -223,7 +223,7 @@ _QWEN_MTP_V1_SCORING = {
 #       WHAT THIS LINTER ITSELF CHECKS, stated exactly, because the two are
 #       easy to conflate: it pins the value of scoring.minPairsPerCohort in
 #       benchmark.json against the registry below. It does NOT read
-#       tools/bonsai2-27b-measure-and-score.sh, so it does not compare the manifest
+#       tools/measure-and-score.sh, so it does not compare the manifest
 #       against the wrapper's actual --min-pairs literal -- a wrapper edited to
 #       --min-pairs 2 while this manifest still said 4 would not be caught HERE.
 #       That drift is caught at the pin instead: benchd refuses the run. The

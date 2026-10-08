@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# bonsai2-27b-measure-and-score.sh -- benchmark.json's benchmarkCommand /
+# measure-and-score.sh -- benchmark.json's benchmarkCommand /
 # preSubmitCommand entry point for track bonsai2-27b-mlx-v1.
 #
 # It drives `benchd iterate --mode official` -- the SOLE scored path -- against
@@ -103,8 +103,8 @@
 # scoring_semantics and docs/bonsai2-27b-port-notes.md section 4.
 #
 # Usage:
-#   ./tools/bonsai2-27b-measure-and-score.sh                 # full measure + seal
-#   ./tools/bonsai2-27b-measure-and-score.sh --preflight-only # pre-GPU dry-run, no engine
+#   ./tools/measure-and-score.sh                 # full measure + seal
+#   ./tools/measure-and-score.sh --preflight-only # pre-GPU dry-run, no engine
 #
 # Env:
 #   MLXFAST_SCORE_PATH               Where benchd seals the {score, metrics} JSON
@@ -183,7 +183,7 @@ for arg in "$@"; do
   case "${arg}" in
     --preflight-only) PREFLIGHT_ONLY=1 ;;
     *)
-      echo "bonsai2-27b-measure-and-score.sh: unrecognized argument: ${arg}" >&2
+      echo "measure-and-score.sh: unrecognized argument: ${arg}" >&2
       exit 2
       ;;
   esac
@@ -191,7 +191,7 @@ done
 
 # jq is required for reading the fixture (live_goldens + pins) and the trackId.
 if ! command -v jq >/dev/null 2>&1; then
-  echo "bonsai2-27b-measure-and-score.sh: jq is required (it reads the fixture pins and trackId)." >&2
+  echo "measure-and-score.sh: jq is required (it reads the fixture pins and trackId)." >&2
   exit 1
 fi
 
@@ -214,7 +214,7 @@ if [[ -z "${BENCHD:-}" ]]; then
   BENCHD="$("${SCRIPT_DIR}/tools/fetch-benchd.sh")"
 fi
 if [[ ! -x "${BENCHD}" ]]; then
-  echo "bonsai2-27b-measure-and-score.sh: benchd not found at ${BENCHD}." >&2
+  echo "measure-and-score.sh: benchd not found at ${BENCHD}." >&2
   echo "  fetch it: ./tools/fetch-benchd.sh   (resolves the dist channel, verifies the manifest)" >&2
   echo "  or set BENCHD to an existing binary." >&2
   exit 1
@@ -222,7 +222,7 @@ fi
 
 CONTRACT="${SCRIPT_DIR}/fixtures/bonsai2_27b_mlx_v1_track.json"
 if [[ ! -f "${CONTRACT}" ]]; then
-  echo "bonsai2-27b-measure-and-score.sh: track contract fixture missing: ${CONTRACT}" >&2
+  echo "measure-and-score.sh: track contract fixture missing: ${CONTRACT}" >&2
   exit 1
 fi
 
@@ -238,11 +238,11 @@ fi
 # this exact spelling on every track it scores, so it stays as it is.
 MANIFEST_TRACK_ID="$(jq -r '.trackId // empty' "${SCRIPT_DIR}/benchmark.json" 2>/dev/null || true)"
 if [[ -z "${MANIFEST_TRACK_ID}" ]]; then
-  echo "bonsai2-27b-measure-and-score.sh: benchmark.json carries no trackId; benchd iterate requires MLXFAST_QWEN_MTP_TRACK_ID and this script will not guess one." >&2
+  echo "measure-and-score.sh: benchmark.json carries no trackId; benchd iterate requires MLXFAST_QWEN_MTP_TRACK_ID and this script will not guess one." >&2
   exit 1
 fi
 if [[ -n "${MLXFAST_QWEN_MTP_TRACK_ID:-}" && "${MLXFAST_QWEN_MTP_TRACK_ID}" != "${MANIFEST_TRACK_ID}" ]]; then
-  echo "bonsai2-27b-measure-and-score.sh: MLXFAST_QWEN_MTP_TRACK_ID is set to '${MLXFAST_QWEN_MTP_TRACK_ID}' but benchmark.json trackId is '${MANIFEST_TRACK_ID}'; the track id is ONE value and this script will not override either." >&2
+  echo "measure-and-score.sh: MLXFAST_QWEN_MTP_TRACK_ID is set to '${MLXFAST_QWEN_MTP_TRACK_ID}' but benchmark.json trackId is '${MANIFEST_TRACK_ID}'; the track id is ONE value and this script will not override either." >&2
   exit 1
 fi
 export MLXFAST_QWEN_MTP_TRACK_ID="${MANIFEST_TRACK_ID}"
@@ -263,7 +263,7 @@ while IFS= read -r name; do
   LIVE_GOLDEN_NAMES+=("${name}")
 done < <(jq -r '(.live_goldens // [])[]' "${CONTRACT}")
 if [[ ${#LIVE_GOLDEN_NAMES[@]} -eq 0 ]]; then
-  echo "bonsai2-27b-measure-and-score.sh: fixture declares no live_goldens; there is no golden to score over." >&2
+  echo "measure-and-score.sh: fixture declares no live_goldens; there is no golden to score over." >&2
   exit 1
 fi
 
@@ -300,7 +300,7 @@ for name in "${LIVE_GOLDEN_NAMES[@]}"; do
   pool_entry="$(jq -c --arg base "/${serial_base}" \
     'first(.timed_prompt_pool[] | select(.r2_path | endswith($base)))' "${CONTRACT}")"
   if [[ -z "${pool_entry}" || "${pool_entry}" == "null" ]]; then
-    echo "bonsai2-27b-measure-and-score.sh: live golden '${name}' has no timed_prompt_pool entry (looked for an r2_path ending in /${serial_base})." >&2
+    echo "measure-and-score.sh: live golden '${name}' has no timed_prompt_pool entry (looked for an r2_path ending in /${serial_base})." >&2
     exit 1
   fi
   serial_sha="$(printf '%s' "${pool_entry}" | jq -r '.sha256 // empty')"
@@ -311,7 +311,7 @@ for name in "${LIVE_GOLDEN_NAMES[@]}"; do
   if [[ "${SPEC_DESC}" != "serial" ]]; then
     spec_entry="$(jq -c --arg k "${SPEC_DESC}" --arg n "${name}" '.live_golden_speculative[$k][$n] // empty' "${CONTRACT}")"
     if [[ -z "${spec_entry}" || "${spec_entry}" == "null" ]]; then
-      echo "bonsai2-27b-measure-and-score.sh: declared spec '${SPEC_DESC}' has no live_golden_speculative entry for live golden '${name}' in ${CONTRACT}; no timed oracle is authored for that prompt at that draft depth. Refusing rather than scoring it against the serial oracle." >&2
+      echo "measure-and-score.sh: declared spec '${SPEC_DESC}' has no live_golden_speculative entry for live golden '${name}' in ${CONTRACT}; no timed oracle is authored for that prompt at that draft depth. Refusing rather than scoring it against the serial oracle." >&2
       exit 1
     fi
     timed_base="$(printf '%s' "${spec_entry}" | jq -r '.r2_path // empty')"
@@ -319,14 +319,14 @@ for name in "${LIVE_GOLDEN_NAMES[@]}"; do
     timed_sha="$(printf '%s' "${spec_entry}" | jq -r '.sha256 // empty')"
     timed_bytes="$(printf '%s' "${spec_entry}" | jq -r '.bytes // empty')"
     if [[ -z "${timed_base}" || "${timed_base}" != *.golden.json ]]; then
-      echo "bonsai2-27b-measure-and-score.sh: live_golden_speculative['${SPEC_DESC}']['${name}'] names no *.golden.json (r2_path='${timed_base}')." >&2
+      echo "measure-and-score.sh: live_golden_speculative['${SPEC_DESC}']['${name}'] names no *.golden.json (r2_path='${timed_base}')." >&2
       exit 1
     fi
-    echo "bonsai2-27b-measure-and-score.sh: declared spec ${SPEC_DESC}; timed oracle for ${name} is ${timed_base}" >&2
+    echo "measure-and-score.sh: declared spec ${SPEC_DESC}; timed oracle for ${name} is ${timed_base}" >&2
   fi
   if ! printf '%s' "${timed_sha}" | grep -Eq '^[0-9a-f]{64}$' \
     || ! printf '%s' "${timed_bytes}" | grep -Eq '^[1-9][0-9]*$'; then
-    echo "bonsai2-27b-measure-and-score.sh: live golden '${name}' is unarmed or malformed (sha256='${timed_sha}', bytes='${timed_bytes}'); nothing can be pin-verified against it." >&2
+    echo "measure-and-score.sh: live golden '${name}' is unarmed or malformed (sha256='${timed_sha}', bytes='${timed_bytes}'); nothing can be pin-verified against it." >&2
     exit 1
   fi
   GOLDEN_BASENAMES+=("${timed_base}")
@@ -350,11 +350,11 @@ if [[ "${PREFLIGHT_ONLY}" == "1" ]]; then
   # dry-run honest rather than a rubber stamp.
   armed="$(jq -r '.official_scoring_enabled // false' "${CONTRACT}")"
   if [[ "${armed}" != "true" ]]; then
-    echo "bonsai2-27b-measure-and-score.sh: preflight REFUSING -- fixtures/bonsai2_27b_mlx_v1_track.json does not declare official_scoring_enabled: true (got '${armed}')." >&2
+    echo "measure-and-score.sh: preflight REFUSING -- fixtures/bonsai2_27b_mlx_v1_track.json does not declare official_scoring_enabled: true (got '${armed}')." >&2
     echo "  benchd refuses to seal an official scoring artifact for an unarmed track; this dry-run mirrors that refusal." >&2
     exit 1
   fi
-  echo "bonsai2-27b-measure-and-score.sh: preflight -- arm gate OK (official_scoring_enabled: true), live goldens ${LIVE_GOLDEN_NAMES[*]}" >&2
+  echo "measure-and-score.sh: preflight -- arm gate OK (official_scoring_enabled: true), live goldens ${LIVE_GOLDEN_NAMES[*]}" >&2
 
   # INTEGRITY PIN: for each staged live golden, validate-golden re-verifies its
   # raw bytes against the pin AND load-validates it (reference-model pin from
@@ -368,7 +368,7 @@ if [[ "${PREFLIGHT_ONLY}" == "1" ]]; then
         --golden-bytes "${GOLDEN_BYTES_LIST[$i]}" \
         --contract "${CONTRACT}"
     else
-      echo "bonsai2-27b-measure-and-score.sh: preflight -- live golden not staged (MLXFAST_QWEN38_GOLDEN_DIR unset or ${GOLDEN_BASENAMES[$i]} absent); benchd re-verifies the {sha256, bytes} pin on the real run." >&2
+      echo "measure-and-score.sh: preflight -- live golden not staged (MLXFAST_QWEN38_GOLDEN_DIR unset or ${GOLDEN_BASENAMES[$i]} absent); benchd re-verifies the {sha256, bytes} pin on the real run." >&2
     fi
   done
   exit 0
@@ -378,7 +378,7 @@ fi
 # A REAL RUN needs every staged live golden.
 if [[ -z "${GOLDEN_DIR}" || ! -d "${GOLDEN_DIR}" ]]; then
   cat >&2 <<EOF
-bonsai2-27b-measure-and-score.sh: MLXFAST_QWEN38_GOLDEN_DIR is unset or missing.
+measure-and-score.sh: MLXFAST_QWEN38_GOLDEN_DIR is unset or missing.
   The live goldens (${GOLDEN_BASENAMES[*]}) are staged onto the box out of band
   (docs/bonsai2-27b-port-notes.md section 5) and this job holds no credential
   to fetch them. There is nothing this script can do here except refuse.
@@ -389,7 +389,7 @@ GOLDEN_ARGS=()
 GOLDEN_PIN_ARGS=()
 for i in "${!GOLDEN_BASENAMES[@]}"; do
   if [[ ! -f "${GOLDEN_DIR}/${GOLDEN_BASENAMES[$i]}" ]]; then
-    echo "bonsai2-27b-measure-and-score.sh: live golden not found at ${GOLDEN_DIR}/${GOLDEN_BASENAMES[$i]}" >&2
+    echo "measure-and-score.sh: live golden not found at ${GOLDEN_DIR}/${GOLDEN_BASENAMES[$i]}" >&2
     echo "  live_goldens names '${LIVE_GOLDEN_NAMES[$i]}' (fixtures/bonsai2_27b_mlx_v1_track.json); stage ${GOLDEN_BASENAMES[$i]} into MLXFAST_QWEN38_GOLDEN_DIR." >&2
     exit 1
   fi
@@ -415,23 +415,23 @@ done
 BASELINE_WORKSPACE="${MLXFAST_BASELINE_WORKSPACE:-}"
 BASELINE_CALIBRATION="${MLXFAST_BASELINE_CALIBRATION:-}"
 if [[ -z "${BASELINE_WORKSPACE}" ]]; then
-  echo "bonsai2-27b-measure-and-score.sh: MLXFAST_BASELINE_WORKSPACE is unset." >&2
+  echo "measure-and-score.sh: MLXFAST_BASELINE_WORKSPACE is unset." >&2
   echo "  The ranked run is PAIRED: the serial-control leg runs on the organizer-staged reference tree at the fixture's baseline_reference_commit, and its measured spt is the denominator. Without that tree there is no control leg and no score." >&2
   echo "  Stage it with tools/stage-baseline-workspace.sh and export MLXFAST_BASELINE_WORKSPACE in the runner service environment." >&2
   exit 1
 fi
 if [[ ! -d "${BASELINE_WORKSPACE}" ]]; then
-  echo "bonsai2-27b-measure-and-score.sh: MLXFAST_BASELINE_WORKSPACE is not a directory: ${BASELINE_WORKSPACE}" >&2
+  echo "measure-and-score.sh: MLXFAST_BASELINE_WORKSPACE is not a directory: ${BASELINE_WORKSPACE}" >&2
   exit 1
 fi
 if [[ -z "${BASELINE_CALIBRATION}" ]]; then
-  echo "bonsai2-27b-measure-and-score.sh: MLXFAST_BASELINE_CALIBRATION is unset." >&2
+  echo "measure-and-score.sh: MLXFAST_BASELINE_CALIBRATION is unset." >&2
   echo "  It names this box's baseline-calibration.json, the health band the serial-control leg must land inside. Without it a leg-1 measurement from a box that was not itself would seal a score anyway." >&2
   echo "  Write it with tools/calibrate-box.sh and export MLXFAST_BASELINE_CALIBRATION in the runner service environment." >&2
   exit 1
 fi
 if [[ ! -f "${BASELINE_CALIBRATION}" ]]; then
-  echo "bonsai2-27b-measure-and-score.sh: MLXFAST_BASELINE_CALIBRATION is not a file: ${BASELINE_CALIBRATION}" >&2
+  echo "measure-and-score.sh: MLXFAST_BASELINE_CALIBRATION is not a file: ${BASELINE_CALIBRATION}" >&2
   exit 1
 fi
 
@@ -442,7 +442,7 @@ fi
 # overrides it for engine development.
 ENGINE_BIN="${MLXFAST_ENGINE_BIN:-${SCRIPT_DIR}/.build/release/bench-worker}"
 if [[ ! -x "${ENGINE_BIN}" ]]; then
-  echo "bonsai2-27b-measure-and-score.sh: engine binary missing or not executable: ${ENGINE_BIN}" >&2
+  echo "measure-and-score.sh: engine binary missing or not executable: ${ENGINE_BIN}" >&2
   echo "  build + stage it (./setup.sh, or tools/stage-bench-worker.sh), or set MLXFAST_ENGINE_BIN." >&2
   exit 1
 fi
@@ -459,7 +459,7 @@ case "${ENGINE_BIN_ABS}" in
     ENGINE_BIN_REL="${ENGINE_BIN_ABS#"${SCRIPT_DIR_ABS}"/}"
     ;;
   *)
-    echo "bonsai2-27b-measure-and-score.sh: the engine at ${ENGINE_BIN_ABS} is outside this checkout (${SCRIPT_DIR_ABS})." >&2
+    echo "measure-and-score.sh: the engine at ${ENGINE_BIN_ABS} is outside this checkout (${SCRIPT_DIR_ABS})." >&2
     echo "  The paired run hands benchd a checkout-RELATIVE engine path and benchd re-roots it under MLXFAST_BASELINE_WORKSPACE to find the serial-control leg's worker. An engine outside the checkout has no relative form, so the control leg would run this same binary and the score would be 1 by construction." >&2
     exit 1
     ;;
@@ -470,7 +470,7 @@ esac
 # transforms into; MLXFAST_WEIGHTS_PATH overrides.
 WEIGHTS_PATH="${MLXFAST_WEIGHTS_PATH:-${SCRIPT_DIR}/weights}"
 if [[ ! -d "${WEIGHTS_PATH}" ]]; then
-  echo "bonsai2-27b-measure-and-score.sh: the transformed weights directory is missing: ${WEIGHTS_PATH}" >&2
+  echo "measure-and-score.sh: the transformed weights directory is missing: ${WEIGHTS_PATH}" >&2
   echo "  Run ./setup.sh, or set MLXFAST_WEIGHTS_PATH to the transformed weights directory." >&2
   exit 1
 fi
@@ -488,7 +488,7 @@ case "${WEIGHTS_PATH_ABS}" in
     : # inside the checkout, so it has a relative form to re-root
     ;;
   *)
-    echo "bonsai2-27b-measure-and-score.sh: the transformed weights at ${WEIGHTS_PATH_ABS} are outside this checkout (${SCRIPT_DIR_ABS})." >&2
+    echo "measure-and-score.sh: the transformed weights at ${WEIGHTS_PATH_ABS} are outside this checkout (${SCRIPT_DIR_ABS})." >&2
     echo "  benchd re-roots this path under MLXFAST_BASELINE_WORKSPACE to find the serial-control leg's own transformed weights. A weights directory outside the checkout has no relative form, so the control leg would read this submission's transform and the ratio would carry it on both sides." >&2
     exit 1
     ;;
@@ -527,7 +527,7 @@ SCORE_PATH="${MLXFAST_SCORE_PATH:-score.json}"
 # environment instead of through this script. tools/ranked-box-preflight.sh
 # refuses it before the job reaches here; this is the second line.
 if [[ -n "${BENCH_WORKER_RESIDENT_SOCKET:-}" ]]; then
-  echo "bonsai2-27b-measure-and-score.sh: BENCH_WORKER_RESIDENT_SOCKET is set (${BENCH_WORKER_RESIDENT_SOCKET})." >&2
+  echo "measure-and-score.sh: BENCH_WORKER_RESIDENT_SOCKET is set (${BENCH_WORKER_RESIDENT_SOCKET})." >&2
   echo "  The paired run boots ONE resident PER LEG, and benchd boots each from that leg's own tree. A socket in the environment would attach every phase of both legs to one already-loaded resident, so the reference leg would run on the candidate's weights. Unset it." >&2
   exit 1
 fi
@@ -537,20 +537,20 @@ fi
 # already holds and wait for itself.
 if [[ "${MLXFAST_GPU_WINDOW_HELD:-0}" != "1" ]]; then
   if ! command -v python3 >/dev/null 2>&1; then
-    echo "bonsai2-27b-measure-and-score.sh: python3 is required to hold the GPU lock for the measurement window." >&2
+    echo "measure-and-score.sh: python3 is required to hold the GPU lock for the measurement window." >&2
     exit 1
   fi
   GPU_LOCK_PATH="${RESIDENT_UP_LOCK_PATH:-/tmp/mtplx-gpu-exclusive.lock}"
   GPU_LOCK_TIMEOUT_S="${MLXFAST_GPU_LOCK_TIMEOUT_S:-1800}"
   if ! printf '%s' "${GPU_LOCK_TIMEOUT_S}" | grep -Eq '^[1-9][0-9]*$'; then
-    echo "bonsai2-27b-measure-and-score.sh: MLXFAST_GPU_LOCK_TIMEOUT_S must be a positive integer (got '${GPU_LOCK_TIMEOUT_S}')." >&2
+    echo "measure-and-score.sh: MLXFAST_GPU_LOCK_TIMEOUT_S must be a positive integer (got '${GPU_LOCK_TIMEOUT_S}')." >&2
     exit 1
   fi
   # resident-up.sh reads this name to check the lock is HELD before it boots a
   # leg's resident, so the lock this script takes is the lock those boots check.
   export RESIDENT_UP_LOCK_PATH="${GPU_LOCK_PATH}"
   export MLXFAST_GPU_WINDOW_HELD=1
-  echo "bonsai2-27b-measure-and-score.sh: taking the GPU lock ${GPU_LOCK_PATH} for the whole measurement. benchd boots ONE resident per leg inside it (tools/resident-up.sh --boot), from that leg's own tree." >&2
+  echo "measure-and-score.sh: taking the GPU lock ${GPU_LOCK_PATH} for the whole measurement. benchd boots ONE resident per leg inside it (tools/resident-up.sh --boot), from that leg's own tree." >&2
   # The lock holder is the OUTERMOST process of the window: it holds an
   # exclusive flock on an inheritable descriptor and then becomes this script
   # again through execv, so the lock lives exactly as long as the measurement. A
@@ -564,7 +564,7 @@ fd = os.open(lock_path, os.O_RDWR | os.O_CREAT, 0o666)
 os.set_inheritable(fd, True)
 def on_timeout(*_):
     sys.stderr.write(
-        \"bonsai2-27b-measure-and-score.sh: another owner has held \"
+        \"measure-and-score.sh: another owner has held \"
         + lock_path
         + \" for \" + str(timeout_s) + \"s; refusing to measure beside another GPU owner. Nothing has been loaded.\\n\")
     sys.exit(1)
@@ -574,7 +574,7 @@ fcntl.flock(fd, fcntl.LOCK_EX)
 signal.alarm(0)
 os.execv(argv[0], argv)
 " "${GPU_LOCK_PATH}" "${GPU_LOCK_TIMEOUT_S}" \
-    "${SCRIPT_DIR}/tools/bonsai2-27b-measure-and-score.sh" "$@"
+    "${SCRIPT_DIR}/tools/measure-and-score.sh" "$@"
 fi
 
 # THE SOLE SCORED PATH: benchd iterate --mode official over the live goldens.
@@ -607,18 +607,18 @@ if [[ "${DECLARED_DEPTH}" != "0" ]]; then
     mtp)
       if "${BENCHD}" iterate --help 2>&1 | grep -q -- '--mtp-depth'; then
         SPEC_ARGS=(--mtp-depth "${DECLARED_DEPTH}")
-        echo "bonsai2-27b-measure-and-score.sh: the declaration requests MTP depth ${DECLARED_DEPTH}; benchd sends it on the wire and the engine's effective_spec echo is sealed." >&2
+        echo "measure-and-score.sh: the declaration requests MTP depth ${DECLARED_DEPTH}; benchd sends it on the wire and the engine's effective_spec echo is sealed." >&2
       else
-        echo "bonsai2-27b-measure-and-score.sh: REFUSING -- the declaration requests MTP depth ${DECLARED_DEPTH} but this benchd has no --mtp-depth; the leg would run serial against a speculative declaration." >&2
+        echo "measure-and-score.sh: REFUSING -- the declaration requests MTP depth ${DECLARED_DEPTH} but this benchd has no --mtp-depth; the leg would run serial against a speculative declaration." >&2
         exit 1
       fi
       ;;
     dflash)
       if "${BENCHD}" iterate --help 2>&1 | grep -q -- '--candidate-spec'; then
         SPEC_ARGS=(--candidate-spec "{\"mode\":\"dflash\",\"dflash\":{\"depth\":${DECLARED_DEPTH}}}")
-        echo "bonsai2-27b-measure-and-score.sh: the declaration requests DFlash 2 depth ${DECLARED_DEPTH}; benchd sends the candidate spec on the wire and the engine's effective_spec echo is sealed." >&2
+        echo "measure-and-score.sh: the declaration requests DFlash 2 depth ${DECLARED_DEPTH}; benchd sends the candidate spec on the wire and the engine's effective_spec echo is sealed." >&2
       else
-        echo "bonsai2-27b-measure-and-score.sh: REFUSING -- the declaration requests DFlash 2 depth ${DECLARED_DEPTH} but this benchd has no --candidate-spec; the leg would run serial against a speculative declaration." >&2
+        echo "measure-and-score.sh: REFUSING -- the declaration requests DFlash 2 depth ${DECLARED_DEPTH} but this benchd has no --candidate-spec; the leg would run serial against a speculative declaration." >&2
         exit 1
       fi
       # THE RESIDENT'S DRAFTER IS NOT SET HERE. Each leg's resident boot reads
@@ -633,12 +633,12 @@ if [[ "${DECLARED_DEPTH}" != "0" ]]; then
       # leg which drafter the pair is about.
       ;;
     *)
-      echo "bonsai2-27b-measure-and-score.sh: REFUSING -- the declaration names decoder '${DECLARED_DECODER}', which this script cannot request." >&2
+      echo "measure-and-score.sh: REFUSING -- the declaration names decoder '${DECLARED_DECODER}', which this script cannot request." >&2
       exit 1
       ;;
   esac
 else
-  echo "bonsai2-27b-measure-and-score.sh: the declaration is serial; benchd sends no spec (depth 0)." >&2
+  echo "measure-and-score.sh: the declaration is serial; benchd sends no spec (depth 0)." >&2
 fi
 
 # THE RESIDENT LOG DIRECTORY IS OUTSIDE BOTH TREES. benchd boots each leg's
@@ -669,9 +669,9 @@ if [[ -z "${RUNNER_NAME:-}" ]]; then
   CALIBRATION_BOX="$(jq -r '.box // empty' "${BASELINE_CALIBRATION}" 2>/dev/null || true)"
   if [[ -n "${CALIBRATION_BOX}" ]]; then
     BOX_ARGS=(--box "${CALIBRATION_BOX}")
-    echo "bonsai2-27b-measure-and-score.sh: RUNNER_NAME is unset (hand run); naming the box '${CALIBRATION_BOX}' from the calibration file, so benchd matches the band to the machine it was measured on." >&2
+    echo "measure-and-score.sh: RUNNER_NAME is unset (hand run); naming the box '${CALIBRATION_BOX}' from the calibration file, so benchd matches the band to the machine it was measured on." >&2
   else
-    echo "bonsai2-27b-measure-and-score.sh: RUNNER_NAME is unset and the calibration file names no box; benchd resolves the box identity itself." >&2
+    echo "measure-and-score.sh: RUNNER_NAME is unset and the calibration file names no box; benchd resolves the box identity itself." >&2
   fi
 fi
 
@@ -687,11 +687,11 @@ if "${BENCHD}" iterate --help 2>&1 | grep -q -- '--control-golden'; then
   for i in "${!SERIAL_GOLDEN_BASENAMES[@]}"; do
     control_path="${GOLDEN_DIR}/${SERIAL_GOLDEN_BASENAMES[$i]}"
     if [[ ! -f "${control_path}" ]]; then
-      echo "bonsai2-27b-measure-and-score.sh: serial golden not found at ${control_path}; the serial-control leg has no tape to verify against." >&2
+      echo "measure-and-score.sh: serial golden not found at ${control_path}; the serial-control leg has no tape to verify against." >&2
       exit 1
     fi
     CONTROL_ARGS+=(--control-golden "${control_path}")
-    echo "bonsai2-27b-measure-and-score.sh: serial-control leg verifies against ${SERIAL_GOLDEN_BASENAMES[$i]} (sha256 ${SERIAL_GOLDEN_SHA256S[$i]}, ${SERIAL_GOLDEN_BYTES_LIST[$i]} bytes)" >&2
+    echo "measure-and-score.sh: serial-control leg verifies against ${SERIAL_GOLDEN_BASENAMES[$i]} (sha256 ${SERIAL_GOLDEN_SHA256S[$i]}, ${SERIAL_GOLDEN_BYTES_LIST[$i]} bytes)" >&2
   done
   for sha in "${SERIAL_GOLDEN_SHA256S[@]}"; do
     CONTROL_PIN_ARGS+=(--control-golden-sha256 "${sha}")
@@ -701,7 +701,7 @@ if "${BENCHD}" iterate --help 2>&1 | grep -q -- '--control-golden'; then
   done
   CONTROL_ARGS+=("${CONTROL_PIN_ARGS[@]}")
 elif [[ "${SPEC_DESC}" != "serial" ]]; then
-  echo "bonsai2-27b-measure-and-score.sh: REFUSING -- the declaration is ${SPEC_DESC} but this benchd has no --control-golden; the serial-control leg would be verified against the ${SPEC_DESC} tape." >&2
+  echo "measure-and-score.sh: REFUSING -- the declaration is ${SPEC_DESC} but this benchd has no --control-golden; the serial-control leg would be verified against the ${SPEC_DESC} tape." >&2
   exit 1
 fi
 exec "${BENCHD}" iterate \

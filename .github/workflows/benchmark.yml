@@ -19,7 +19,7 @@
 #
 # THE STAGING CONVENTION IS THE EXISTING ONE. The ranked steps read
 # MLXFAST_QWEN38_GOLDEN_DIR out of the self-hosted runner's own process
-# environment -- the same name tools/bonsai2-27b-measure-and-score.sh and
+# environment -- the same name tools/measure-and-score.sh and
 # tools/ranked-box-preflight.sh already read (docs/participant-contract.md
 # section 6).
 #
@@ -651,13 +651,13 @@ jobs:
         # DO NOT EXPORT BENCH_WORKER_RESIDENT_SOCKET on this box. It names one
         # already-loaded resident, so both legs would attach to it. The
         # preflight and the measure script both refuse it by name.
-        # tools/bonsai2-27b-measure-and-score.sh header, section
+        # tools/measure-and-score.sh header, section
         # "ONE RESIDENT bench-worker PER LEG", holds the detail.
         run: |
           MLXFAST_SCORE_PATH=score.json \
           MLXFAST_BASELINE_WORKSPACE="${MLXFAST_BASELINE_WORKSPACE}" \
           MLXFAST_BASELINE_CALIBRATION="${MLXFAST_BASELINE_CALIBRATION}" \
-            ./tools/bonsai2-27b-measure-and-score.sh
+            ./tools/measure-and-score.sh
 
       - name: Upload score artifact
         # Matches benchmark.json scoreArtifact `benchmark-results-<run_id>/score.json`.

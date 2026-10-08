@@ -26,7 +26,7 @@
 # quietly dishonest.
 #
 # The benchmark.json manifest routes Yukon's ranked commands at
-# ./tools/bonsai2-27b-measure-and-score.sh (preSubmitCommand / benchmarkCommand), so
+# ./tools/measure-and-score.sh (preSubmitCommand / benchmarkCommand), so
 # this proxy is the developer/CWD-agnostic entry point and a harness-hash root,
 # not a Yukon dependency.
 set -euo pipefail

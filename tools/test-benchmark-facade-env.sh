@@ -22,7 +22,7 @@
 #   5. a caller pre-sets the SAME value: accepted.
 #
 # It then pins the RANKED path's WINDOW wiring on
-# tools/bonsai2-27b-measure-and-score.sh, with a stub bench-worker that
+# tools/measure-and-score.sh, with a stub bench-worker that
 # binds a socket and answers a hello the way the real resident does:
 #   6. THE RANKED PATH BOOTS NO RESIDENT AND EXPORTS NO SOCKET. It used to boot
 #      one from the CANDIDATE tree and hand benchd the socket; under the paired
@@ -215,7 +215,7 @@ fi
 # paths inside the sandbox. Nothing loads: the bench-worker is a stub that
 # binds the socket and answers the hello, and benchd is a stub too.
 # ---------------------------------------------------------------------------
-MEASURE_REL="tools/bonsai2-27b-measure-and-score.sh"
+MEASURE_REL="tools/measure-and-score.sh"
 RES_ROOT="${WORK}/measure-root"
 mkdir -p "${RES_ROOT}/tools" "${RES_ROOT}/fixtures" "${RES_ROOT}/weights"
 cp "${REPO_ROOT}/${MEASURE_REL}" "${RES_ROOT}/tools/"

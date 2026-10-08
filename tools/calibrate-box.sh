@@ -33,7 +33,7 @@
 # THIS SCRIPT RUNS ON THE RANKED BOX ONLY. It loads the checkpoint, so it takes
 # the fleet GPU lock (/tmp/mtplx-gpu-exclusive.lock) FIRST and holds it for the
 # whole calibration -- the same lock, taken the same way, as the ranked
-# measurement in tools/bonsai2-27b-measure-and-score.sh. A calibration
+# measurement in tools/measure-and-score.sh. A calibration
 # measured beside another GPU owner is a calibration of the wrong machine.
 #
 # IT BOOTS NO RESIDENT AND EXPORTS NO SOCKET. Each pass is a full serial-control

@@ -155,7 +155,7 @@ that a returning gated test is inventoried rather than running unseen.
 
 | Not run in CI | Why | Where it runs |
 | --- | --- | --- |
-| ~~The two `benchd/scripts/benchmark.sh` command targets in `benchmark.json`~~ | **No longer applicable.** benchd stopped being a source dependency; every `benchmark.json` command target now lives in this repository (`./setup.sh`, `./tools/fetch-benchd.sh`, `./tools/bonsai2-27b-measure-and-score.sh`), so CI verifies all three and the linter downgrades nothing | CI, fully verified |
+| ~~The two `benchd/scripts/benchmark.sh` command targets in `benchmark.json`~~ | **No longer applicable.** benchd stopped being a source dependency; every `benchmark.json` command target now lives in this repository (`./setup.sh`, `./tools/fetch-benchd.sh`, `./tools/measure-and-score.sh`), so CI verifies all three and the linter downgrades nothing | CI, fully verified |
 | `tools/build-mlx-metallib.sh` (the AOT `mlx.metallib`) | needs the Metal toolchain component and produces a GPU artifact CI cannot exercise | box, via `./setup.sh` |
 | `swift build -c release` into the two production scratch roots (`.build`, `.build-worker`) | the scored binary layout; CI proves the code compiles, not that the release layout is staged | box, before a benchd pass |
 | Correctness gates, token fidelity, the timed paired measurement, scoring | measurement authority is benchd's, on the ranked M5 box, behind a thermal gate | the ranked pipeline; nothing in this repository times or scores anything |

@@ -778,7 +778,7 @@ composite is absent only when the record accepted no pair, or when a window is
 degenerate, and the reason names which.
 
 What is missing is the arm state and the goldens, not this repository's score
-path. `tools/bonsai2-27b-measure-and-score.sh` refuses with a non-zero
+path. `tools/measure-and-score.sh` refuses with a non-zero
 exit rather than emit a score. It does not substitute a diagnostic for the
 ruled composite formula. Refuse, not degrade, is the standing posture for this
 track. The `kv_backend` check and the byte-budget check use it too.
@@ -833,7 +833,7 @@ refuses an extra `*.json` in it.
 ## 6. Running the benchmark
 
 `benchmarkCommand` targets `benchd iterate --mode official` through
-`tools/bonsai2-27b-measure-and-score.sh`. That script is trusted-side
+`tools/measure-and-score.sh`. That script is trusted-side
 tooling. It is not an editable path, so a submission cannot rewrite the
 measurement pipeline from inside its own archive.
 
@@ -910,7 +910,7 @@ whose `composite_speedup_floor_met` is false, and refuses a run whose sealed
 `scoring.scoredExponents`.
 
 `preSubmitCommand` runs
-`./tools/bonsai2-27b-measure-and-score.sh --preflight-only`.
+`./tools/measure-and-score.sh --preflight-only`.
 That runs the arm gate and, for each live golden that is staged, the integrity pin.
 It exits without measuring, and it needs no reference tree.
 
@@ -953,7 +953,7 @@ decision: which of the two staged drafters this leg's resident holds. Each leg
 holds the drafter its own tree declares, and nothing crosses between the two
 trees.
 
-`tools/bonsai2-27b-measure-and-score.sh` boots no resident and exports no
+`tools/measure-and-score.sh` boots no resident and exports no
 socket. What it still owns is the window: it takes the box GPU lock
 `/tmp/mtplx-gpu-exclusive.lock` and holds it for the whole measurement, because
 a resident holds about 18.5 GB of unified memory whoever booted it and the box

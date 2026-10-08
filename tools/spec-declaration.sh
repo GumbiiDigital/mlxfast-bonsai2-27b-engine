@@ -2,7 +2,7 @@
 #
 # spec-declaration.sh -- the SINGLE trusted source that reads the participant's
 # speculative-decode DECLARATION and derives the decoder and the draft depth the
-# ranked run requests from it. tools/bonsai2-27b-measure-and-score.sh resolves
+# ranked run requests from it. tools/measure-and-score.sh resolves
 # both THROUGH this one script, so the fail-closed validation and the derivation
 # can never drift between the arm gate and the benchd request.
 #

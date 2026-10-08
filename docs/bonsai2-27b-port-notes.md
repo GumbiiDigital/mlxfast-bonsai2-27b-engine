@@ -323,7 +323,8 @@ The arming commit fills these fixture keys from the recorded files:
 `hidden_correctness_golden` (the first live golden's own pin),
 `live_golden_speculative` and `official_scoring_enabled`.
 
-`tools/bonsai2-27b-measure-and-score.sh` refuses a declared decoder and depth
+`tools/measure-and-score.sh` (formerly `tools/bonsai2-27b-measure-and-score.sh`)
+refuses a declared decoder and depth
 that has no `live_golden_speculative` entry for a live golden. The keys are
 `mtp1` to `mtp7` and `dflash1` to `dflash16`. Each key maps every live golden's
 name to its oracle pin, so the arming commit needs all 23 keys for every live
