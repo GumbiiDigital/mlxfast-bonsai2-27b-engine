@@ -125,7 +125,11 @@ ok "no R2 credential, signer, or dist token in the job environment"
 #                                     weights -- the exact failure of public run
 #                                     34230122059, arriving through the box
 #                                     instead of through the measure script.
-for var in BENCHD BENCHCTL MLXFAST_SKIP_WEIGHTS_DOWNLOAD SKIP_MODEL_DOWNLOAD MLXFAST_LOCAL_COOL_GATE MLXFAST_LOCAL_ALLOW_GOLDEN_DRIFT MLXFAST_GPU_TEMP_CMD BENCH_WORKER_RESIDENT_SOCKET; do
+#   DECODER_STAGING_CONTRACT /        tools/decoder-staging-paths.sh reads the
+#   MLXFAST_TEST_MODE                 tree fixture in production; these exist
+#                                     only for hermetic unit tests and would
+#                                     redirect drafter staging on a ranked box.
+for var in BENCHD BENCHCTL MLXFAST_SKIP_WEIGHTS_DOWNLOAD SKIP_MODEL_DOWNLOAD MLXFAST_LOCAL_COOL_GATE MLXFAST_LOCAL_ALLOW_GOLDEN_DRIFT MLXFAST_GPU_TEMP_CMD BENCH_WORKER_RESIDENT_SOCKET DECODER_STAGING_CONTRACT MLXFAST_TEST_MODE; do
   eval "value=\${${var}:-}"
   [[ -z "${value}" ]] || fail "${var} is set in the ranked job's environment; it weakens or bypasses what the ranked run measures"
 done

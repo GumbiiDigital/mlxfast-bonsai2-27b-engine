@@ -216,6 +216,7 @@
   },
   "mtp_head": {
     "role": "spec_decode_mtp_head",
+    "staging_path": "reference_weights/Qwen3.8-27B-MTP-4bit",
     "source": "separate_pinned_export",
     "upstream_model_id": "EigenLabs/Qwen3.8-27B-MTP-4bit",
     "upstream_revision": "329261c5e0b3f9c233485e682cb3b67b88c20a55",
@@ -254,6 +255,7 @@
   },
   "dflash_drafter": {
     "role": "spec_decode_dflash_drafter",
+    "staging_path": "reference_weights/Qwen3.8-27B-DFlash2",
     "source": "separate_pinned_export",
     "upstream_model_id": "z-lab/Qwen3.8-27B-DFlash2",
     "upstream_revision": "50307d4c4cde6860d4eee73e2547cd786fe8e8a4",

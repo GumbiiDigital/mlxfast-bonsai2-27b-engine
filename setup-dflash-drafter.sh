@@ -44,11 +44,15 @@ umask 022
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 cd "${ROOT_DIR}"
 
+# shellcheck source=tools/decoder-staging-paths.sh
+source "${ROOT_DIR}/tools/decoder-staging-paths.sh"
+
 TRACK_ID="bonsai2-27b-mlx-v1"
 DRAFTER_REPO="${MLXFAST_DFLASH_DRAFTER_REPO:-z-lab/Qwen3.8-27B-DFlash2}"
 DRAFTER_REVISION="${MLXFAST_DFLASH_DRAFTER_REVISION:-50307d4c4cde6860d4eee73e2547cd786fe8e8a4}"
 DRAFTER_MANIFEST="${MLXFAST_DFLASH_DRAFTER_MANIFEST_PATH:-fixtures/reference_bonsai2_27b_dflash2_drafter.sha256}"
-DRAFTER_DIR="${MLXFAST_DFLASH_DRAFTER_DIR:-reference_weights/Qwen3.8-27B-DFlash2}"
+_default_drafter_dir="$(dflash_drafter_staging_path)" || exit 1
+DRAFTER_DIR="${MLXFAST_DFLASH_DRAFTER_DIR:-${_default_drafter_dir}}"
 
 [[ -f "${DRAFTER_MANIFEST}" ]] || {
   echo "setup-dflash-drafter.sh: pin file is missing: ${DRAFTER_MANIFEST}" >&2

@@ -429,6 +429,14 @@ struct Bonsai2TrackFixtureTests {
         let target = try #require(object["target"] as? [String: Any])
         #expect(head["upstream_model_id"] as? String != target["upstream_model_id"] as? String)
         #expect(head["manifest_path"] as? String != target["manifest_path"] as? String)
+        #expect(head["staging_path"] as? String == "reference_weights/Qwen3.8-27B-MTP-4bit")
+    }
+
+    @Test("dflash drafter declares its on-disk staging path under reference_weights")
+    func dflashDrafterDeclaresStagingPath() throws {
+        let object = try bonsai2TrackContractObject()
+        let drafter = try #require(object["dflash_drafter"] as? [String: Any])
+        #expect(drafter["staging_path"] as? String == "reference_weights/Qwen3.8-27B-DFlash2")
     }
 
     @Test("permitted draft depths fit the declared MTP envelope")

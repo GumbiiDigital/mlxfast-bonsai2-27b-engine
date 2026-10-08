@@ -464,12 +464,17 @@ if [[ -n "${MTP_DEPTH}" && -n "${DFLASH_DEPTH}" ]]; then
   echo "benchmark.sh: --mtp-depth and --dflash-depth name the same leg's decoder; pass exactly one" >&2
   exit 1
 fi
+if [[ -n "${MTP_DEPTH}" || -n "${DFLASH_DEPTH}" ]]; then
+  # shellcheck source=decoder-staging-paths.sh
+  source "${FACADE_DIR}/decoder-staging-paths.sh"
+fi
 if [[ -n "${MTP_DEPTH}" ]]; then
   [[ "${MTP_DEPTH}" =~ ^[1-9][0-9]*$ ]] || { echo "benchmark.sh: --mtp-depth must be a positive integer (got '${MTP_DEPTH}')" >&2; exit 1; }
   benchd_args+=(--mtp-depth "${MTP_DEPTH}")
   # The head is a separate export. benchd spawns the worker with --weights
   # alone, so the worker reads the head directory from its environment.
-  export BENCH_WORKER_DRAFTER="${BENCH_WORKER_DRAFTER:-${FACADE_DIR}/../reference_weights/Qwen3.8-27B-MTP-4bit}"
+  _mtp_staging_rel="$(mtp_head_staging_path)" || exit 1
+  export BENCH_WORKER_DRAFTER="${BENCH_WORKER_DRAFTER:-${FACADE_DIR}/../${_mtp_staging_rel}}"
 fi
 if [[ -n "${DFLASH_DEPTH}" ]]; then
   [[ "${DFLASH_DEPTH}" =~ ^[1-9][0-9]*$ ]] || { echo "benchmark.sh: --dflash-depth must be a positive integer (got '${DFLASH_DEPTH}')" >&2; exit 1; }
@@ -477,7 +482,8 @@ if [[ -n "${DFLASH_DEPTH}" ]]; then
   benchd_args+=(--candidate-spec "{\"mode\":\"dflash\",\"dflash\":{\"depth\":${DFLASH_DEPTH}}}")
   # The DFlash 2 drafter is its own separate export, so it travels the same way
   # the MTP head does: one drafter directory in the worker's environment.
-  export BENCH_WORKER_DRAFTER="${BENCH_WORKER_DRAFTER:-${FACADE_DIR}/../reference_weights/Qwen3.8-27B-DFlash2}"
+  _dflash_staging_rel="$(dflash_drafter_staging_path)" || exit 1
+  export BENCH_WORKER_DRAFTER="${BENCH_WORKER_DRAFTER:-${FACADE_DIR}/../${_dflash_staging_rel}}"
 fi
 if [[ "${OFFICIAL}" == "1" ]]; then
   enforce_official_sandbox

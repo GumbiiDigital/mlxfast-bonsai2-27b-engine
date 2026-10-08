@@ -36,11 +36,15 @@ umask 022
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 cd "${ROOT_DIR}"
 
+# shellcheck source=tools/decoder-staging-paths.sh
+source "${ROOT_DIR}/tools/decoder-staging-paths.sh"
+
 TRACK_ID="bonsai2-27b-mlx-v1"
 HEAD_REPO="${MLXFAST_MTP_HEAD_REPO:-EigenLabs/Qwen3.8-27B-MTP-4bit}"
 HEAD_REVISION="${MLXFAST_MTP_HEAD_REVISION:-329261c5e0b3f9c233485e682cb3b67b88c20a55}"
 HEAD_MANIFEST="${MLXFAST_MTP_HEAD_MANIFEST_PATH:-fixtures/reference_bonsai2_27b_mtp_head_4bit.sha256}"
-HEAD_DIR="${MLXFAST_MTP_HEAD_DIR:-reference_weights/Qwen3.8-27B-MTP-4bit}"
+_default_head_dir="$(mtp_head_staging_path)" || exit 1
+HEAD_DIR="${MLXFAST_MTP_HEAD_DIR:-${_default_head_dir}}"
 
 [[ -f "${HEAD_MANIFEST}" ]] || {
   echo "setup-mtp-head.sh: pin file is missing: ${HEAD_MANIFEST}" >&2

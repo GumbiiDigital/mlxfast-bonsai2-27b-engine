@@ -80,6 +80,11 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONTRACT="${SCRIPT_DIR}/fixtures/bonsai2_27b_mlx_v1_track.json"
 
+# shellcheck source=tools/decoder-staging-paths.sh
+source "${SCRIPT_DIR}/tools/decoder-staging-paths.sh"
+MTP_HEAD_STAGING_REL="$(mtp_head_staging_path)" || exit 1
+DFLASH_DRAFTER_STAGING_REL="$(dflash_drafter_staging_path)" || exit 1
+
 die() {
   echo "stage-baseline-workspace.sh: $*" >&2
   exit 1
@@ -124,9 +129,9 @@ if [[ "${DRY_RUN}" == "0" ]]; then
   [[ -d "${MLXFAST_REFERENCE_DIR}" ]] \
     || die "MLXFAST_REFERENCE_DIR is not a directory: ${MLXFAST_REFERENCE_DIR}"
   [[ -d "${MLXFAST_MTP_HEAD_REFERENCE_DIR:-}" ]] \
-    || die "MLXFAST_MTP_HEAD_REFERENCE_DIR is not a directory: '${MLXFAST_MTP_HEAD_REFERENCE_DIR:-}'. It is the box's verified copy of the separate MTP head (./setup-mtp-head.sh stages one at reference_weights/Qwen3.8-27B-MTP-4bit); the control leg loads the head from its own tree"
+    || die "MLXFAST_MTP_HEAD_REFERENCE_DIR is not a directory: '${MLXFAST_MTP_HEAD_REFERENCE_DIR:-}'. It is the box's verified copy of the separate MTP head (./setup-mtp-head.sh stages one at ${MTP_HEAD_STAGING_REL}); the control leg loads the head from its own tree"
   [[ -d "${MLXFAST_DFLASH_DRAFTER_REFERENCE_DIR:-}" ]] \
-    || die "MLXFAST_DFLASH_DRAFTER_REFERENCE_DIR is not a directory: '${MLXFAST_DFLASH_DRAFTER_REFERENCE_DIR:-}'. It is the box's verified copy of the separate DFlash 2 drafter (./setup-dflash-drafter.sh stages one at reference_weights/Qwen3.8-27B-DFlash2); a DFlash pair loads it on BOTH legs, so the control leg needs its own copy"
+    || die "MLXFAST_DFLASH_DRAFTER_REFERENCE_DIR is not a directory: '${MLXFAST_DFLASH_DRAFTER_REFERENCE_DIR:-}'. It is the box's verified copy of the separate DFlash 2 drafter (./setup-dflash-drafter.sh stages one at ${DFLASH_DRAFTER_STAGING_REL}); a DFlash pair loads it on BOTH legs, so the control leg needs its own copy"
   if [[ "${PRESTAGED_METALLIB}" == "1" ]]; then
     stage="${MLXFAST_METALLIB_STAGE:-}"
     [[ -n "${stage}" && -f "${stage}/mlx.metallib" && -f "${stage}/mlx.metallib.fingerprint" ]] \
@@ -212,10 +217,17 @@ run env -C "${TARGET}" .build/release/mlxfast-swift transform --reference "${REF
 #     ITS OWN tree. The head is copied from the box's verified copy, and the
 #     reference tree's own ./setup-mtp-head.sh then checks every file against
 #     the reference tree's own pin. A file that fails the pin is refused there.
+#     Staging paths come from THIS checkout's contract fixture (above). The
+#     pinned baseline_reference_commit tree's tools/resident-up.sh --boot still
+#     hardcodes its own reference_weights/... directories (88cf569); a
+#     staging_path rename REQUIRES re-pinning baseline_reference_commit so boot
+#     and verify agree. MLXFAST_MTP_HEAD_DIR only redirects the pinned
+#     setup-mtp-head.sh verify destination during this staging step; it is not a
+#     substitute for re-pinning.
 HEAD_SOURCE_DIR="${MLXFAST_MTP_HEAD_REFERENCE_DIR:-<MLXFAST_MTP_HEAD_REFERENCE_DIR>}"
 run mkdir -p "${TARGET}/reference_weights"
-run cp -R "${HEAD_SOURCE_DIR}" "${TARGET}/reference_weights/Qwen3.8-27B-MTP-4bit"
-run env -C "${TARGET}" ./setup-mtp-head.sh
+run cp -R "${HEAD_SOURCE_DIR}" "${TARGET}/${MTP_HEAD_STAGING_REL}"
+run env -C "${TARGET}" MLXFAST_MTP_HEAD_DIR="${MTP_HEAD_STAGING_REL}" ./setup-mtp-head.sh
 
 # 5c. The separate DFlash 2 drafter, staged exactly as the head is and for the
 #     same reason. A DFlash pair holds the drafter on BOTH legs -- the control
@@ -224,8 +236,8 @@ run env -C "${TARGET}" ./setup-mtp-head.sh
 #     ratio. It costs 3.85 GB in the reference tree, which is the price of a
 #     symmetric denominator.
 DFLASH_SOURCE_DIR="${MLXFAST_DFLASH_DRAFTER_REFERENCE_DIR:-<MLXFAST_DFLASH_DRAFTER_REFERENCE_DIR>}"
-run cp -R "${DFLASH_SOURCE_DIR}" "${TARGET}/reference_weights/Qwen3.8-27B-DFlash2"
-run env -C "${TARGET}" ./setup-dflash-drafter.sh
+run cp -R "${DFLASH_SOURCE_DIR}" "${TARGET}/${DFLASH_DRAFTER_STAGING_REL}"
+run env -C "${TARGET}" MLXFAST_DFLASH_DRAFTER_DIR="${DFLASH_DRAFTER_STAGING_REL}" ./setup-dflash-drafter.sh
 
 # 6. Verify what was staged. HEAD must be the pinned commit, the worker must be
 #    there with its pair, and the weights must be transformed, which is exactly

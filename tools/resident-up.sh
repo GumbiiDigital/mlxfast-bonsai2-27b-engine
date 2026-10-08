@@ -99,8 +99,8 @@
 #                      setup.sh). Required.
 #
 #   The DRAFTER is a separate artifact on this track and is resolved, not
-#   passed: `MLXFAST_MTP_HEAD_DIR` for the MTP head, defaulting to
-#   <repo>/reference_weights/Qwen3.8-27B-MTP-4bit, and
+#   passed: `MLXFAST_MTP_HEAD_DIR` for the MTP head, defaulting to the path
+#   the contract fixture pins (tools/decoder-staging-paths.sh), and
 #   `MLXFAST_DFLASH_DRAFTER_DIR` for the DFlash 2 drafter, which selects that
 #   decoder when it is set. ./setup-mtp-head.sh and ./setup-dflash-drafter.sh
 #   stage them. Both legs load one drafter; only the speculative leg drafts with
@@ -311,8 +311,12 @@ fi
 # In --boot the drafter is THIS TREE'S, full stop, for the same reason the
 # binary and the weights are: the ranked job exports the candidate's paths, and
 # the reference leg must not load them.
-MTP_HEAD_DEFAULT="${SCRIPT_DIR}/reference_weights/Qwen3.8-27B-MTP-4bit"
-DFLASH_DRAFTER_DEFAULT="${SCRIPT_DIR}/reference_weights/Qwen3.8-27B-DFlash2"
+# shellcheck source=tools/decoder-staging-paths.sh
+source "${SCRIPT_DIR}/tools/decoder-staging-paths.sh"
+_mtp_staging_rel="$(mtp_head_staging_path)" || exit 1
+_dflash_staging_rel="$(dflash_drafter_staging_path)" || exit 1
+MTP_HEAD_DEFAULT="${SCRIPT_DIR}/${_mtp_staging_rel}"
+DFLASH_DRAFTER_DEFAULT="${SCRIPT_DIR}/${_dflash_staging_rel}"
 if [[ "${MODE}" == "boot" ]]; then
   SPEC_DECLARATION="${SCRIPT_DIR}/tools/spec-declaration.sh"
   [[ -x "${SPEC_DECLARATION}" ]] \

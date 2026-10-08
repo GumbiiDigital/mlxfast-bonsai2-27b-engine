@@ -45,6 +45,10 @@ set -uo pipefail
 
 ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." >/dev/null && pwd -P)"
 RESIDENT_UP="${ROOT_DIR}/tools/resident-up.sh"
+# shellcheck source=tools/decoder-staging-paths.sh
+source "${ROOT_DIR}/tools/decoder-staging-paths.sh"
+MTP_HEAD_STAGING_REL="$(mtp_head_staging_path)" || exit 1
+DFLASH_DRAFTER_STAGING_REL="$(dflash_drafter_staging_path)" || exit 1
 
 WORK="$(mktemp -d)"
 trap 'cleanup' EXIT
@@ -352,10 +356,11 @@ hold_lock
 
 TREE="${WORK}/leg-tree"
 mkdir -p "${TREE}/tools" "${TREE}/.build/release" "${TREE}/weights" \
-  "${TREE}/reference_weights/Qwen3.8-27B-MTP-4bit" \
-  "${TREE}/reference_weights/Qwen3.8-27B-DFlash2"
+  "${TREE}/${MTP_HEAD_STAGING_REL}" \
+  "${TREE}/${DFLASH_DRAFTER_STAGING_REL}"
 cp "${RESIDENT_UP}" "${TREE}/tools/resident-up.sh"
-chmod +x "${TREE}/tools/resident-up.sh"
+cp "${ROOT_DIR}/tools/decoder-staging-paths.sh" "${TREE}/tools/decoder-staging-paths.sh"
+chmod +x "${TREE}/tools/resident-up.sh" "${TREE}/tools/decoder-staging-paths.sh"
 # The boot reads the leg's DECLARED decoder through the tree's own trusted
 # reader, so the synthetic tree carries that reader and the contract it checks
 # the declaration against.
@@ -429,7 +434,7 @@ else
 fi
 
 # --- B3. the boot ran THIS TREE'S worker, not an inherited MLXFAST_ENGINE_BIN
-if grep -q "${TREE}/reference_weights/Qwen3.8-27B-MTP-4bit" "${BOOT_LOG}/stub-argv" 2>/dev/null; then
+if grep -q "${TREE}/${MTP_HEAD_STAGING_REL}" "${BOOT_LOG}/stub-argv" 2>/dev/null; then
   pass "--boot named the tree's OWN MTP head (both legs load the same bytes)"
 else
   fail "--boot did not pass --drafter: $(tr '\n' ' ' < "${BOOT_LOG}/stub-argv" 2>/dev/null)"
@@ -499,7 +504,7 @@ DFLASH_SOCKET_OUT="${WORK}/leg-dflash.socket"
 out="$(run_leg --boot --spec serial --draft-len 0 --socket-out "${DFLASH_SOCKET_OUT}")"; rc=$?
 dflash_socket="$(head -n 1 "${DFLASH_SOCKET_OUT}" 2>/dev/null || true)"
 if [[ "${rc}" -eq 0 ]] \
-   && grep -q "${TREE}/reference_weights/Qwen3.8-27B-DFlash2" "${BOOT_LOG}/stub-argv" 2>/dev/null; then
+   && grep -q "${TREE}/${DFLASH_DRAFTER_STAGING_REL}" "${BOOT_LOG}/stub-argv" 2>/dev/null; then
   pass "a tree that DECLARES dflash boots the DFlash 2 drafter even when benchd labels the leg serial"
 else
   fail "a dflash declaration did not select the DFlash 2 drafter (rc ${rc}): $(tr '\n' ' ' < "${BOOT_LOG}/stub-argv" 2>/dev/null)"
